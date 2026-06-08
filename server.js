@@ -433,6 +433,57 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  if (req.method === "PUT" && url.pathname === "/api/profile") {
+    const session = await requireAuth(req, res);
+    if (!session) {
+      return;
+    }
+
+    const body = await parseRequestBody(req);
+    const name = String(body.name || "").trim();
+    const email = normalizeEmail(body.email);
+    const apartment = String(body.apartment || "").trim();
+    const block = String(body.block || "").trim();
+    const phone = String(body.phone || "").trim();
+
+    if (!name || !email || !apartment || !block) {
+      sendJson(res, 400, { error: "Nome, e-mail, apartamento e bloco são obrigatórios." });
+      return;
+    }
+
+    if (!isValidApartment(apartment)) {
+      sendJson(res, 400, { error: "Apartamento deve ser um número entre 1 e 228." });
+      return;
+    }
+
+    const existingUser = await getUserByEmail(email);
+    if (existingUser && existingUser.id !== session.user.id) {
+      sendJson(res, 409, { error: "Já existe outro usuário com este e-mail." });
+      return;
+    }
+
+    const existingUnit = await getUserByUnit(block, apartment);
+    if (existingUnit && existingUnit.id !== session.user.id) {
+      sendJson(res, 409, { error: "Já existe outro usuário para este bloco e apartamento." });
+      return;
+    }
+
+    const updatedUser = await updateUser({
+      id: session.user.id,
+      name,
+      email,
+      apartment,
+      block,
+      phone,
+      missingStickers: session.user.missingStickers,
+      duplicateStickers: session.user.duplicateStickers,
+      duplicateStickerQuantities: session.user.duplicateStickerQuantities
+    });
+
+    sendJson(res, 200, { user: publicUser(updatedUser) });
+    return;
+  }
+
   if (req.method === "GET" && url.pathname === "/api/my-collection/export") {
     const session = await requireAuth(req, res);
     if (!session) {

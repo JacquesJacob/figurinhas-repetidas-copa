@@ -13,7 +13,10 @@ const state = {
 
 const registerForm = document.querySelector("#register-form");
 const loginForm = document.querySelector("#login-form");
+const profileView = document.querySelector("#profile-view");
+const profileForm = document.querySelector("#profile-form");
 const authFeedback = document.querySelector("#auth-feedback");
+const authTabs = document.querySelector(".tabs");
 const dashboard = document.querySelector("#dashboard");
 const publicDashboard = document.querySelector("#public-dashboard");
 const dashboardTitle = document.querySelector("#dashboard-title");
@@ -32,8 +35,17 @@ const refreshMatchesButton = document.querySelector("#refresh-matches");
 const missingSearch = document.querySelector("#missing-search");
 const duplicateSearch = document.querySelector("#duplicate-search");
 const toast = document.querySelector("#toast");
+const editProfileButton = document.querySelector("#edit-profile");
+const saveProfileButton = document.querySelector("#save-profile");
+const cancelProfileButton = document.querySelector("#cancel-profile");
+const profileName = document.querySelector("#profile-name");
+const profileEmail = document.querySelector("#profile-email");
+const profileBlock = document.querySelector("#profile-block");
+const profileApartment = document.querySelector("#profile-apartment");
+const profilePhone = document.querySelector("#profile-phone");
 
 let toastTimer = null;
+let isEditingProfile = false;
 
 document.querySelectorAll("[data-auth-tab]").forEach((button) => {
   button.addEventListener("click", () => switchAuthTab(button.dataset.authTab));
@@ -53,9 +65,37 @@ function buildRegisterPayload(form) {
   return payload;
 }
 
+function buildProfilePayload(form) {
+  const formData = new FormData(form);
+  const payload = Object.fromEntries(formData.entries());
+
+  payload.name = String(payload.name || "").trim();
+  payload.email = String(payload.email || "").trim();
+  payload.block = String(payload.block || "").trim();
+  payload.apartment = String(payload.apartment || "").trim();
+  payload.phone = String(payload.phone || "").trim();
+
+  return payload;
+}
+
 function validateRegisterPayload(payload) {
   if (!payload.name || !payload.email || !payload.password || !payload.block || !payload.apartment) {
     showFeedback("Preencha obrigatoriamente Nome, Email, Senha, Bloco e Apartamento.", true);
+    return false;
+  }
+
+  const apartmentNumber = Number.parseInt(payload.apartment, 10);
+  if (!/^\d+$/.test(payload.apartment) || apartmentNumber < 1 || apartmentNumber > 228) {
+    showFeedback("Apartamento deve ser um número entre 1 e 228.", true);
+    return false;
+  }
+
+  return true;
+}
+
+function validateProfilePayload(payload) {
+  if (!payload.name || !payload.email || !payload.block || !payload.apartment) {
+    showFeedback("Preencha obrigatoriamente Nome, Email, Bloco e Apartamento.", true);
     return false;
   }
 
@@ -119,6 +159,35 @@ loginForm.addEventListener("submit", async (event) => {
   await refreshMatches();
 });
 
+profileForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!state.currentUser || !isEditingProfile) {
+    return;
+  }
+
+  const payload = buildProfilePayload(profileForm);
+  if (!validateProfilePayload(payload)) {
+    return;
+  }
+
+  const result = await request("/api/profile", {
+    method: "PUT",
+    body: JSON.stringify(payload)
+  });
+
+  if (!result.ok) {
+    showFeedback(result.error, true);
+    return;
+  }
+
+  state.currentUser = result.user;
+  hydrateCollectionFromUser(result.user);
+  setProfileEditing(false);
+  renderSession();
+  showFeedback("");
+  showToast("Dados do usuário atualizados com sucesso.");
+});
+
 saveCollectionButton.addEventListener("click", async () => {
   if (!state.currentUser) {
     return;
@@ -151,6 +220,25 @@ exportCollectionButton.addEventListener("click", () => {
   }
 
   window.location.href = "/api/my-collection/export";
+});
+
+editProfileButton.addEventListener("click", () => {
+  if (!state.currentUser) {
+    return;
+  }
+
+  showFeedback("");
+  setProfileEditing(true);
+});
+
+cancelProfileButton.addEventListener("click", () => {
+  if (!state.currentUser) {
+    return;
+  }
+
+  showFeedback("");
+  setProfileEditing(false);
+  fillProfileForm(state.currentUser);
 });
 
 logoutButton.addEventListener("click", async () => {
@@ -208,6 +296,10 @@ async function loadPublicStats() {
 }
 
 function switchAuthTab(tab) {
+  if (state.currentUser) {
+    return;
+  }
+
   document.querySelectorAll("[data-auth-tab]").forEach((button) => {
     button.classList.toggle("active", button.dataset.authTab === tab);
   });
@@ -226,8 +318,17 @@ function renderSession() {
   const isLoggedIn = Boolean(state.currentUser);
   dashboard.classList.toggle("hidden", !isLoggedIn);
   publicDashboard.classList.toggle("hidden", isLoggedIn);
+  authTabs.classList.toggle("hidden", isLoggedIn);
+  profileView.classList.toggle("hidden", !isLoggedIn || isEditingProfile);
+  profileForm.classList.toggle("hidden", !isLoggedIn || !isEditingProfile);
 
   if (!isLoggedIn) {
+    isEditingProfile = false;
+    registerForm.classList.toggle(
+      "hidden",
+      !document.querySelector("[data-auth-tab='register']").classList.contains("active")
+    );
+    loginForm.classList.toggle("hidden", !document.querySelector("[data-auth-tab='login']").classList.contains("active"));
     dashboardTitle.textContent = "Painel de trocas";
     sessionSummary.textContent = "Visão geral das trocas do condomínio.";
     stats.innerHTML = "";
@@ -238,11 +339,48 @@ function renderSession() {
     return;
   }
 
+  registerForm.classList.add("hidden");
+  loginForm.classList.add("hidden");
   dashboardTitle.textContent = "Meu Painel";
   sessionSummary.textContent = `${state.currentUser.name} · Bloco ${state.currentUser.block} · Apto ${state.currentUser.apartment}`;
+  fillProfileView(state.currentUser);
+  fillProfileForm(state.currentUser);
+  setProfileEditing(isEditingProfile);
   renderStats();
   renderChecklist("missing");
   renderChecklist("duplicate");
+}
+
+function fillProfileView(user) {
+  profileName.textContent = user.name || "";
+  profileEmail.textContent = user.email || "";
+  profileBlock.textContent = user.block || "";
+  profileApartment.textContent = user.apartment || "";
+  profilePhone.textContent = user.phone || "Não informado";
+}
+
+function fillProfileForm(user) {
+  profileForm.elements.name.value = user.name || "";
+  profileForm.elements.email.value = user.email || "";
+  profileForm.elements.block.value = user.block || "";
+  profileForm.elements.apartment.value = user.apartment || "";
+  profileForm.elements.phone.value = user.phone || "";
+}
+
+function setProfileEditing(isEditing) {
+  isEditingProfile = isEditing;
+
+  profileView.classList.toggle("hidden", isEditing);
+  profileForm.classList.toggle("hidden", !isEditing);
+
+  profileForm.elements.name.readOnly = !isEditing;
+  profileForm.elements.email.readOnly = !isEditing;
+  profileForm.elements.apartment.readOnly = !isEditing;
+  profileForm.elements.phone.readOnly = !isEditing;
+  profileForm.elements.block.disabled = !isEditing;
+
+  saveProfileButton.classList.toggle("hidden", !isEditing);
+  cancelProfileButton.classList.toggle("hidden", !isEditing);
 }
 
 function renderPublicStats() {

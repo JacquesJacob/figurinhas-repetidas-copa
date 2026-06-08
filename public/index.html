@@ -91,6 +91,68 @@
             <button type="submit" class="primary">Entrar</button>
           </form>
 
+          <div id="profile-view" class="stack hidden">
+            <div class="profile-field">
+              <span class="profile-label">Nome</span>
+              <strong id="profile-name" class="profile-value"></strong>
+            </div>
+            <div class="profile-field">
+              <span class="profile-label">Email</span>
+              <strong id="profile-email" class="profile-value"></strong>
+            </div>
+            <div class="inline-fields">
+              <div class="profile-field">
+                <span class="profile-label">Bloco</span>
+                <strong id="profile-block" class="profile-value"></strong>
+              </div>
+              <div class="profile-field">
+                <span class="profile-label">Apartamento</span>
+                <strong id="profile-apartment" class="profile-value"></strong>
+              </div>
+            </div>
+            <div class="profile-field">
+              <span class="profile-label">Celular para contato</span>
+              <strong id="profile-phone" class="profile-value"></strong>
+            </div>
+            <div class="profile-actions">
+              <button type="button" id="edit-profile" class="primary">Editar</button>
+            </div>
+          </div>
+
+          <form id="profile-form" class="stack hidden">
+            <label>
+              Nome
+              <input name="name" required readonly />
+            </label>
+            <label>
+              Email
+              <input name="email" type="email" required readonly />
+            </label>
+            <div class="inline-fields">
+              <label>
+                Bloco
+                <select name="block" required disabled>
+                  <option value="">Selecione</option>
+                  <option value="Jacarandá">Jacarandá</option>
+                  <option value="Cedro">Cedro</option>
+                  <option value="Ipê">Ipê</option>
+                </select>
+              </label>
+              <label>
+                Apartamento
+                <input name="apartment" type="number" min="1" max="228" step="1" inputmode="numeric" required readonly />
+              </label>
+            </div>
+            <label>
+              Celular para contato
+              <input name="phone" placeholder="Opcional" readonly />
+            </label>
+            <div class="profile-actions">
+              <button type="submit" id="save-profile" class="primary hidden">Salvar</button>
+              <button type="button" id="cancel-profile" class="ghost hidden">Cancelar</button>
+            </div>
+          </form>
+
           <p id="auth-feedback" class="feedback"></p>
         </section>
 

@@ -199,6 +199,37 @@ h1 {
   gap: 12px;
 }
 
+.profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.profile-actions button {
+  flex: 1 1 0;
+}
+
+.profile-field {
+  display: grid;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(40, 52, 34, 0.12);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.profile-label {
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.profile-value {
+  font-size: 1rem;
+  color: var(--text);
+  font-weight: 700;
+  word-break: break-word;
+}
+
 label {
   display: grid;
   gap: 6px;
