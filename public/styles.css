@@ -117,6 +117,22 @@ h1 {
   position: relative;
 }
 
+.creator-note {
+  margin-top: 10px;
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.creator-note a {
+  color: var(--accent-strong);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.creator-note a:hover {
+  text-decoration: underline;
+}
+
 .inline-tooltip {
   position: relative;
   color: var(--accent-strong);
@@ -285,6 +301,35 @@ button:hover {
   margin: 14px 0 0;
 }
 
+.dashboard-feedback {
+  margin: 10px 0 2px;
+  font-weight: 700;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, calc(-50% + 12px));
+  z-index: 50;
+  min-width: 260px;
+  max-width: min(92vw, 380px);
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: rgba(14, 122, 83, 0.96);
+  color: #fffdf8;
+  box-shadow: 0 18px 34px rgba(22, 31, 18, 0.24);
+  font-weight: 700;
+  text-align: center;
+  opacity: 0;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.toast.visible {
+  opacity: 1;
+  transform: translate(-50%, -50%);
+}
+
 .hidden {
   display: none !important;
 }
@@ -363,8 +408,12 @@ button:hover {
   background: rgba(255, 255, 255, 0.65);
 }
 
-.group summary {
-  list-style: none;
+.group-toggle {
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
   cursor: pointer;
   padding: 14px 16px;
   font-weight: 700;
@@ -373,15 +422,20 @@ button:hover {
   gap: 10px;
 }
 
-.group summary::-webkit-details-marker {
-  display: none;
+.group-toggle:hover {
+  transform: none;
+  background: rgba(14, 122, 83, 0.05);
 }
 
 .group-items {
-  display: grid;
+  display: none;
   grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
   gap: 10px;
   padding: 0 14px 14px;
+}
+
+.group.open .group-items {
+  display: grid;
 }
 
 .sticker-pill {
@@ -393,6 +447,31 @@ button:hover {
   background: rgba(245, 241, 231, 0.9);
   border: 1px solid rgba(31, 47, 26, 0.09);
   font-size: 0.9rem;
+}
+
+.sticker-pill-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.sticker-pill-duplicate {
+  justify-content: space-between;
+}
+
+.sticker-pill-duplicate.selected {
+  border-color: rgba(14, 122, 83, 0.28);
+  background: rgba(235, 248, 241, 0.95);
+}
+
+.sticker-quantity {
+  width: 68px;
+  min-width: 68px;
+  padding: 8px 10px;
+  text-align: center;
 }
 
 .sticker-pill input {

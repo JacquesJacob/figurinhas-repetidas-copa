@@ -3,7 +3,12 @@ const state = {
   currentUser: null,
   missingStickers: new Set(),
   duplicateStickers: new Set(),
-  publicStats: null
+  duplicateStickerQuantities: {},
+  publicStats: null,
+  openGroups: {
+    missing: new Set(),
+    duplicate: new Set()
+  }
 };
 
 const registerForm = document.querySelector("#register-form");
@@ -21,10 +26,14 @@ const missingList = document.querySelector("#missing-list");
 const duplicateList = document.querySelector("#duplicate-list");
 const matchesList = document.querySelector("#matches-list");
 const saveCollectionButton = document.querySelector("#save-collection");
+const exportCollectionButton = document.querySelector("#export-collection");
 const logoutButton = document.querySelector("#logout-button");
 const refreshMatchesButton = document.querySelector("#refresh-matches");
 const missingSearch = document.querySelector("#missing-search");
 const duplicateSearch = document.querySelector("#duplicate-search");
+const toast = document.querySelector("#toast");
+
+let toastTimer = null;
 
 document.querySelectorAll("[data-auth-tab]").forEach((button) => {
   button.addEventListener("click", () => switchAuthTab(button.dataset.authTab));
@@ -47,6 +56,12 @@ function buildRegisterPayload(form) {
 function validateRegisterPayload(payload) {
   if (!payload.name || !payload.email || !payload.password || !payload.block || !payload.apartment) {
     showFeedback("Preencha obrigatoriamente Nome, Email, Senha, Bloco e Apartamento.", true);
+    return false;
+  }
+
+  const apartmentNumber = Number.parseInt(payload.apartment, 10);
+  if (!/^\d+$/.test(payload.apartment) || apartmentNumber < 1 || apartmentNumber > 228) {
+    showFeedback("Apartamento deve ser um número entre 1 e 228.", true);
     return false;
   }
 
@@ -113,7 +128,7 @@ saveCollectionButton.addEventListener("click", async () => {
     method: "PUT",
     body: JSON.stringify({
       missingStickers: [...state.missingStickers],
-      duplicateStickers: [...state.duplicateStickers]
+      duplicateStickerQuantities: state.duplicateStickerQuantities
     })
   });
 
@@ -127,7 +142,15 @@ saveCollectionButton.addEventListener("click", async () => {
   await loadPublicStats();
   renderSession();
   await refreshMatches();
-  showFeedback("Checklist salvo com sucesso.");
+  showToast("Checklist salvo com sucesso.");
+});
+
+exportCollectionButton.addEventListener("click", () => {
+  if (!state.currentUser) {
+    return;
+  }
+
+  window.location.href = "/api/my-collection/export";
 });
 
 logoutButton.addEventListener("click", async () => {
@@ -135,6 +158,7 @@ logoutButton.addEventListener("click", async () => {
   state.currentUser = null;
   state.missingStickers = new Set();
   state.duplicateStickers = new Set();
+  state.duplicateStickerQuantities = {};
   showFeedback("Sessão encerrada.");
   await loadPublicStats();
   renderSession();
@@ -195,6 +219,7 @@ function switchAuthTab(tab) {
 function hydrateCollectionFromUser(user) {
   state.missingStickers = new Set(user.missingStickers || []);
   state.duplicateStickers = new Set(user.duplicateStickers || []);
+  state.duplicateStickerQuantities = { ...(user.duplicateStickerQuantities || {}) };
 }
 
 function renderSession() {
@@ -308,7 +333,10 @@ function renderInsightList(container, items, primaryKey, primaryLabel, secondary
 function renderStats() {
   const total = state.album.meta.totalStickers;
   const missing = state.missingStickers.size;
-  const duplicates = state.duplicateStickers.size;
+  const duplicates = Object.values(state.duplicateStickerQuantities).reduce(
+    (sum, quantity) => sum + quantity,
+    0
+  );
   const owned = total - missing;
 
   stats.innerHTML = `
@@ -331,6 +359,7 @@ function renderChecklist(kind) {
   const container = kind === "missing" ? missingList : duplicateList;
   const selectedSet = kind === "missing" ? state.missingStickers : state.duplicateStickers;
   const oppositeSet = kind === "missing" ? state.duplicateStickers : state.missingStickers;
+  const openGroups = state.openGroups[kind];
   const query = (kind === "missing" ? missingSearch.value : duplicateSearch.value).trim().toLowerCase();
 
   const sectionsMarkup = state.album.sections
@@ -348,51 +377,228 @@ function renderChecklist(kind) {
 
       const items = filtered
         .map(
-          (sticker) => `
-            <label class="sticker-pill">
-              <input
-                type="checkbox"
-                data-kind="${kind}"
-                data-code="${sticker.code}"
-                ${selectedSet.has(sticker.code) ? "checked" : ""}
-              />
-              <span>${sticker.code}</span>
-            </label>
-          `
+          (sticker) => {
+            if (kind === "duplicate") {
+              const quantity = state.duplicateStickerQuantities[sticker.code] || 1;
+              const checked = selectedSet.has(sticker.code);
+
+              return `
+                <div class="sticker-pill sticker-pill-duplicate ${checked ? "selected" : ""}">
+                  <label class="sticker-pill-toggle">
+                    <input
+                      type="checkbox"
+                      data-kind="${kind}"
+                      data-code="${sticker.code}"
+                      ${checked ? "checked" : ""}
+                    />
+                    <span>${sticker.code}</span>
+                  </label>
+                  <input
+                    type="number"
+                    class="sticker-quantity ${checked ? "" : "hidden"}"
+                    data-quantity-code="${sticker.code}"
+                    min="1"
+                    max="9"
+                    step="1"
+                    inputmode="numeric"
+                    value="${quantity}"
+                  />
+                </div>
+              `;
+            }
+
+            return `
+              <label class="sticker-pill">
+                <input
+                  type="checkbox"
+                  data-kind="${kind}"
+                  data-code="${sticker.code}"
+                  ${selectedSet.has(sticker.code) ? "checked" : ""}
+                />
+                <span>${sticker.code}</span>
+              </label>
+            `;
+          }
         )
         .join("");
 
       return `
-        <details class="group" ${query ? "open" : ""}>
-          <summary>
+        <section class="group ${query || openGroups.has(section.name) ? "open" : ""}" data-section-name="${section.name}">
+          <button type="button" class="group-toggle" aria-expanded="${query || openGroups.has(section.name) ? "true" : "false"}">
             <span>${section.name}</span>
             <span>${countInSection}/${section.stickers.length}</span>
-          </summary>
+          </button>
           <div class="group-items">${items}</div>
-        </details>
+        </section>
       `;
     })
     .join("");
 
   container.innerHTML = sectionsMarkup || `<p class="empty-state">Nenhuma figurinha encontrada.</p>`;
 
+  container.querySelectorAll(".group").forEach((group) => {
+    const toggleButton = group.querySelector(".group-toggle");
+    const itemsPanel = group.querySelector(".group-items");
+
+    itemsPanel?.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+
+    itemsPanel?.addEventListener("mousedown", (event) => {
+      event.stopPropagation();
+    });
+
+    toggleButton?.addEventListener("click", () => {
+      const sectionName = group.dataset.sectionName;
+      if (!sectionName || query) {
+        return;
+      }
+
+      const shouldOpen = !group.classList.contains("open");
+      group.classList.toggle("open", shouldOpen);
+      toggleButton.setAttribute("aria-expanded", String(shouldOpen));
+
+      if (shouldOpen) {
+        openGroups.add(sectionName);
+        return;
+      }
+
+      openGroups.delete(sectionName);
+    });
+  });
+
   container.querySelectorAll("input[type='checkbox']").forEach((checkbox) => {
+    checkbox.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+
+    checkbox.addEventListener("mousedown", (event) => {
+      event.stopPropagation();
+    });
+
     checkbox.addEventListener("change", () => {
       const code = checkbox.dataset.code;
-      const activeSet = checkbox.dataset.kind === "missing" ? state.missingStickers : state.duplicateStickers;
+      const currentKind = checkbox.dataset.kind;
+      const activeSet = currentKind === "missing" ? state.missingStickers : state.duplicateStickers;
+      const group = checkbox.closest(".group");
+      const sectionName = group?.dataset.sectionName;
+      const toggleButton = group?.querySelector(".group-toggle");
 
       if (checkbox.checked) {
         activeSet.add(code);
         oppositeSet.delete(code);
+        if (currentKind === "duplicate") {
+          state.duplicateStickerQuantities[code] = state.duplicateStickerQuantities[code] || 1;
+        }
       } else {
         activeSet.delete(code);
+        if (currentKind === "duplicate") {
+          delete state.duplicateStickerQuantities[code];
+        }
+      }
+
+      if (sectionName) {
+        state.openGroups[currentKind].add(sectionName);
+        group?.classList.add("open");
+        toggleButton?.setAttribute("aria-expanded", "true");
       }
 
       renderStats();
-      renderChecklist("missing");
-      renderChecklist("duplicate");
+      syncOppositeChecklist(code, currentKind);
+      refreshChecklistCounts("missing");
+      refreshChecklistCounts("duplicate");
+      syncDuplicateQuantityField(checkbox);
     });
   });
+
+  container.querySelectorAll(".sticker-quantity").forEach((input) => {
+    input.addEventListener("click", (event) => {
+      event.stopPropagation();
+    });
+
+    input.addEventListener("mousedown", (event) => {
+      event.stopPropagation();
+    });
+
+    input.addEventListener("input", () => {
+      const code = input.dataset.quantityCode;
+      const normalizedQuantity = normalizeDuplicateQuantity(input.value);
+      input.value = String(normalizedQuantity);
+      state.duplicateStickerQuantities[code] = normalizedQuantity;
+      renderStats();
+    });
+
+    input.addEventListener("change", () => {
+      const code = input.dataset.quantityCode;
+      const normalizedQuantity = normalizeDuplicateQuantity(input.value);
+      input.value = String(normalizedQuantity);
+      state.duplicateStickerQuantities[code] = normalizedQuantity;
+      renderStats();
+    });
+  });
+}
+
+function syncOppositeChecklist(code, currentKind) {
+  const oppositeKind = currentKind === "missing" ? "duplicate" : "missing";
+  const oppositeContainer = oppositeKind === "missing" ? missingList : duplicateList;
+  const oppositeCheckbox = oppositeContainer.querySelector(
+    `input[type="checkbox"][data-kind="${oppositeKind}"][data-code="${code}"]`
+  );
+
+  if (oppositeCheckbox) {
+    oppositeCheckbox.checked = false;
+    syncDuplicateQuantityField(oppositeCheckbox);
+  }
+
+  if (oppositeKind === "duplicate") {
+    delete state.duplicateStickerQuantities[code];
+  }
+}
+
+function refreshChecklistCounts(kind) {
+  const container = kind === "missing" ? missingList : duplicateList;
+  const selectedSet = kind === "missing" ? state.missingStickers : state.duplicateStickers;
+
+  container.querySelectorAll(".group").forEach((group) => {
+    const sectionName = group.dataset.sectionName;
+    const section = state.album.sections.find((item) => item.name === sectionName);
+    const counter = group.querySelector(".group-toggle span:last-child");
+
+    if (!section || !counter) {
+      return;
+    }
+
+    const countInSection = section.stickers.filter((sticker) => selectedSet.has(sticker.code)).length;
+    counter.textContent = `${countInSection}/${section.stickers.length}`;
+  });
+}
+
+function syncDuplicateQuantityField(checkbox) {
+  if (checkbox.dataset.kind !== "duplicate") {
+    return;
+  }
+
+  const wrapper = checkbox.closest(".sticker-pill-duplicate");
+  const quantityInput = wrapper?.querySelector(".sticker-quantity");
+
+  if (!wrapper || !quantityInput) {
+    return;
+  }
+
+  wrapper.classList.toggle("selected", checkbox.checked);
+  quantityInput.classList.toggle("hidden", !checkbox.checked);
+
+  if (checkbox.checked) {
+    const quantity = state.duplicateStickerQuantities[checkbox.dataset.code] || 1;
+    quantityInput.value = String(quantity);
+    return;
+  }
+
+  quantityInput.value = "1";
+}
+
+function normalizeDuplicateQuantity(value) {
+  return Math.max(1, Math.min(9, Number.parseInt(value, 10) || 1));
 }
 
 async function refreshMatches() {
@@ -449,6 +655,26 @@ async function refreshMatches() {
 function showFeedback(message, isError = false) {
   authFeedback.textContent = message || "";
   authFeedback.style.color = isError ? "var(--warning)" : "var(--accent-strong)";
+}
+
+function showToast(message) {
+  if (!toast) {
+    return;
+  }
+
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+  }
+
+  toast.textContent = message;
+  toast.classList.remove("hidden");
+  toast.classList.add("visible");
+
+  toastTimer = setTimeout(() => {
+    toast.classList.remove("visible");
+    toast.classList.add("hidden");
+    toastTimer = null;
+  }, 3000);
 }
 
 async function request(url, options = {}) {

@@ -126,7 +126,7 @@ function renderAdmin() {
 function renderStats() {
   const totalUsers = state.users.length;
   const totalMissing = state.users.reduce((sum, user) => sum + user.missingStickers.length, 0);
-  const totalDuplicates = state.users.reduce((sum, user) => sum + user.duplicateStickers.length, 0);
+  const totalDuplicates = state.users.reduce((sum, user) => sum + sumDuplicateQuantities(user), 0);
 
   stats.innerHTML = `
     <article class="stat">
@@ -163,7 +163,7 @@ function renderUsers() {
           <strong>${user.name}</strong>
           <span>${user.email}</span>
           <span>Bloco ${user.block} · Apto ${user.apartment}</span>
-          <span>${user.missingStickers.length} faltantes · ${user.duplicateStickers.length} repetidas</span>
+          <span>${user.missingStickers.length} faltantes · ${sumDuplicateQuantities(user)} repetidas</span>
         </button>
       `
     )
@@ -196,7 +196,7 @@ function renderSelectedUser() {
   editForm.elements.apartment.value = user.apartment;
   editForm.elements.phone.value = user.phone || "";
   editForm.elements.missingStickers.value = user.missingStickers.join("\n");
-  editForm.elements.duplicateStickers.value = user.duplicateStickers.join("\n");
+  editForm.elements.duplicateStickers.value = formatDuplicateStickerInput(user);
 }
 
 async function onSaveUser(event) {
@@ -213,7 +213,7 @@ async function onSaveUser(event) {
     apartment: editForm.elements.apartment.value,
     phone: editForm.elements.phone.value,
     missingStickers: splitStickerInput(editForm.elements.missingStickers.value),
-    duplicateStickers: splitStickerInput(editForm.elements.duplicateStickers.value)
+    duplicateStickerQuantities: parseDuplicateStickerInput(editForm.elements.duplicateStickers.value)
   };
 
   const result = await request(`/api/admin/users/${user.id}`, {
@@ -284,6 +284,36 @@ function splitStickerInput(value) {
     .split(/[\n,;]+/)
     .map((item) => item.trim())
     .filter(Boolean);
+}
+
+function parseDuplicateStickerInput(value) {
+  return value
+    .split(/[\n,;]+/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .reduce((result, item) => {
+      const match = item.match(/^([A-Za-z0-9-]+)(?:\s*x\s*([1-9]))?$/i);
+      if (!match) {
+        return result;
+      }
+
+      const [, code, quantity] = match;
+      result[code] = Number(quantity || 1);
+      return result;
+    }, {});
+}
+
+function formatDuplicateStickerInput(user) {
+  return (user.duplicateStickers || [])
+    .map((code) => `${code} x${user.duplicateStickerQuantities?.[code] || 1}`)
+    .join("\n");
+}
+
+function sumDuplicateQuantities(user) {
+  return Object.values(user.duplicateStickerQuantities || {}).reduce(
+    (sum, quantity) => sum + quantity,
+    0
+  );
 }
 
 function togglePasswordModal(show) {

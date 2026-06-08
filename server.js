@@ -8,6 +8,8 @@ const {
   hashPassword,
   createPasswordRecord,
   sanitizeStickerCodes,
+  sanitizeDuplicateStickerQuantities,
+  deriveDuplicateStickerList,
   publicUser,
   buildMatchList,
   buildPublicStats
@@ -177,13 +179,31 @@ function formatSqlDate(date = new Date()) {
   return date.toISOString().slice(0, 19).replace("T", " ");
 }
 
+function isValidApartment(apartment) {
+  if (!/^\d+$/.test(apartment)) {
+    return false;
+  }
+
+  const apartmentNumber = Number.parseInt(apartment, 10);
+  return apartmentNumber >= 1 && apartmentNumber <= 228;
+}
+
 function extractUserPayload(body) {
   const name = String(body.name || "").trim();
   const email = normalizeEmail(body.email);
   const apartment = String(body.apartment || "").trim();
   const block = String(body.block || "").trim();
   const phone = String(body.phone || "").trim();
-  const duplicateStickers = sanitizeStickerCodes(body.duplicateStickers);
+  const duplicateStickerQuantities = sanitizeDuplicateStickerQuantities(body.duplicateStickerQuantities);
+  const legacyDuplicateStickers = sanitizeStickerCodes(body.duplicateStickers);
+  const normalizedDuplicateStickerQuantities =
+    Object.keys(duplicateStickerQuantities).length > 0
+      ? duplicateStickerQuantities
+      : legacyDuplicateStickers.reduce((result, code) => {
+          result[code] = 1;
+          return result;
+        }, {});
+  const duplicateStickers = deriveDuplicateStickerList(normalizedDuplicateStickerQuantities);
   const missingStickers = sanitizeStickerCodes(body.missingStickers).filter(
     (code) => !duplicateStickers.includes(code)
   );
@@ -194,7 +214,7 @@ function extractUserPayload(body) {
     apartment,
     block,
     phone,
-    duplicateStickers,
+    duplicateStickerQuantities: normalizedDuplicateStickerQuantities,
     missingStickers
   };
 }
@@ -210,6 +230,63 @@ function escapeCsv(value) {
     return `"${stringValue.replace(/"/g, '""')}"`;
   }
   return stringValue;
+}
+
+function escapeXml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function buildCollectionWorkbookXml(user) {
+  const missing = [...(user.missingStickers || [])];
+  const duplicates = [...(user.duplicateStickers || [])].map((code) => {
+    const quantity = user.duplicateStickerQuantities?.[code] || 1;
+    return quantity > 1 ? `${code} (x${quantity})` : code;
+  });
+  const totalRows = Math.max(missing.length, duplicates.length, 1);
+
+  const rows = Array.from({ length: totalRows }, (_, index) => {
+    const missingValue = missing[index] || "";
+    const duplicateValue = duplicates[index] || "";
+
+    return `
+      <Row>
+        <Cell><Data ss:Type="String">${escapeXml(missingValue)}</Data></Cell>
+        <Cell><Data ss:Type="String">${escapeXml(duplicateValue)}</Data></Cell>
+      </Row>
+    `;
+  }).join("");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+  <Worksheet ss:Name="Minhas Figurinhas">
+    <Table>
+      <Row>
+        <Cell><Data ss:Type="String">Figurinhas faltantes</Data></Cell>
+        <Cell><Data ss:Type="String">Figurinhas repetidas</Data></Cell>
+      </Row>
+      ${rows}
+    </Table>
+  </Worksheet>
+</Workbook>`;
+}
+
+function formatDuplicateStickerExport(user) {
+  return (user.duplicateStickers || [])
+    .map((code) => {
+      const quantity = user.duplicateStickerQuantities?.[code] || 1;
+      return `${code} (x${quantity})`;
+    })
+    .join(" | ");
 }
 
 async function handleApi(req, res, url) {
@@ -228,12 +305,17 @@ async function handleApi(req, res, url) {
 
   if (req.method === "POST" && url.pathname === "/api/register") {
     const body = await parseRequestBody(req);
-    const { name, email, apartment, block, phone, duplicateStickers, missingStickers } =
+    const { name, email, apartment, block, phone, duplicateStickerQuantities, missingStickers } =
       extractUserPayload(body);
     const password = String(body.password || "");
 
     if (!name || !email || !password || !apartment || !block) {
       sendJson(res, 400, { error: "Nome, e-mail, senha, apartamento e bloco são obrigatórios." });
+      return;
+    }
+
+    if (!isValidApartment(apartment)) {
+      sendJson(res, 400, { error: "Apartamento deve ser um número entre 1 e 228." });
       return;
     }
 
@@ -263,7 +345,8 @@ async function handleApi(req, res, url) {
       block,
       phone,
       missingStickers,
-      duplicateStickers,
+      duplicateStickers: deriveDuplicateStickerList(duplicateStickerQuantities),
+      duplicateStickerQuantities,
       passwordHash: passwordRecord.hash,
       passwordSalt: passwordRecord.salt,
       createdAt: formatSqlDate()
@@ -344,8 +427,24 @@ async function handleApi(req, res, url) {
 
     sendJson(res, 200, {
       missingStickers: session.user.missingStickers || [],
-      duplicateStickers: session.user.duplicateStickers || []
+      duplicateStickers: session.user.duplicateStickers || [],
+      duplicateStickerQuantities: session.user.duplicateStickerQuantities || {}
     });
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/my-collection/export") {
+    const session = await requireAuth(req, res);
+    if (!session) {
+      return;
+    }
+
+    const fileName = `minhas-figurinhas-${session.user.block.toLowerCase()}-${session.user.apartment}.xls`;
+    res.writeHead(200, {
+      "Content-Type": "application/vnd.ms-excel; charset=utf-8",
+      "Content-Disposition": `attachment; filename="${fileName}"`
+    });
+    res.end(buildCollectionWorkbookXml(session.user));
     return;
   }
 
@@ -356,12 +455,23 @@ async function handleApi(req, res, url) {
     }
 
     const body = await parseRequestBody(req);
-    const duplicateStickers = sanitizeStickerCodes(body.duplicateStickers);
+    const duplicateStickerQuantities = (() => {
+      const normalized = sanitizeDuplicateStickerQuantities(body.duplicateStickerQuantities);
+      if (Object.keys(normalized).length > 0) {
+        return normalized;
+      }
+
+      return sanitizeStickerCodes(body.duplicateStickers).reduce((result, code) => {
+        result[code] = 1;
+        return result;
+      }, {});
+    })();
+    const duplicateStickers = deriveDuplicateStickerList(duplicateStickerQuantities);
     const missingStickers = sanitizeStickerCodes(body.missingStickers).filter(
       (code) => !duplicateStickers.includes(code)
     );
 
-    await replaceUserCollection(session.user.id, missingStickers, duplicateStickers);
+    await replaceUserCollection(session.user.id, missingStickers, duplicateStickerQuantities);
     const refreshedUser = await getUserById(session.user.id);
 
     sendJson(res, 200, { user: publicUser(refreshedUser) });
@@ -516,7 +626,7 @@ async function handleApi(req, res, url) {
           user.apartment,
           user.phone || "",
           user.missingStickers.join(" | "),
-          user.duplicateStickers.join(" | ")
+          formatDuplicateStickerExport(user)
         ]
           .map(escapeCsv)
           .join(",")
@@ -555,11 +665,16 @@ async function handleApi(req, res, url) {
     }
 
     const body = await parseRequestBody(req);
-    const { name, email, apartment, block, phone, duplicateStickers, missingStickers } =
+    const { name, email, apartment, block, phone, duplicateStickerQuantities, missingStickers } =
       extractUserPayload(body);
 
     if (!name || !email || !apartment || !block) {
       sendJson(res, 400, { error: "Nome, e-mail, apartamento e bloco são obrigatórios." });
+      return;
+    }
+
+    if (!isValidApartment(apartment)) {
+      sendJson(res, 400, { error: "Apartamento deve ser um número entre 1 e 228." });
       return;
     }
 
@@ -583,7 +698,8 @@ async function handleApi(req, res, url) {
       block,
       phone,
       missingStickers,
-      duplicateStickers
+      duplicateStickers: deriveDuplicateStickerList(duplicateStickerQuantities),
+      duplicateStickerQuantities
     });
 
     sendJson(res, 200, { user: publicUser(updatedUser) });
