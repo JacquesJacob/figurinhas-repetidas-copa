@@ -1,0 +1,12 @@
+{
+  "name": "album-copa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema web para troca de figurinhas do album da Copa do Mundo 2026 da Panini.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "mysql2": "^3.15.3"
+  }
+}

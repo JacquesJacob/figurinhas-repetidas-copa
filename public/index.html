@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Troca de Figurinhas do Condomínio</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-art-frame">
+          <img
+            class="hero-art"
+            src="/assets/hero-figurinhas-copa-2026.png"
+            alt="Banner Figurinhas da Copa 2026 com estilo de álbum e figurinhas"
+          />
+        </div>
+      </header>
+
+      <main class="grid">
+        <section class="panel auth-panel">
+          <div class="panel-header">
+            <h2>Acesso</h2>
+            <p>Crie sua conta ou entre para gerenciar suas figurinhas.</p>
+            <p class="access-note">
+              Este site de troca de figurinhas da Copa é exclusivo do
+              <span
+                class="inline-tooltip"
+                data-tooltip="R. Dr. Rubens Gomes Bueno 395 - CEP 04730-000"
+              >
+                Condomínio Floresce
+              </span>
+              .
+            </p>
+          </div>
+
+          <div class="tabs">
+            <button class="tab active" data-auth-tab="register">Cadastro</button>
+            <button class="tab" data-auth-tab="login">Entrar</button>
+          </div>
+
+          <form id="register-form" class="stack">
+            <label>
+              Nome
+              <input name="name" required />
+            </label>
+            <label>
+              Email
+              <input name="email" type="email" required />
+            </label>
+            <label>
+              Senha
+              <input name="password" type="password" minlength="6" required />
+            </label>
+            <div class="inline-fields">
+              <label>
+                Bloco
+                <select name="block" required>
+                  <option value="">Selecione</option>
+                  <option value="Jacarandá">Jacarandá</option>
+                  <option value="Cedro">Cedro</option>
+                  <option value="Ipê">Ipê</option>
+                </select>
+              </label>
+              <label>
+                Apartamento
+                <input name="apartment" required />
+              </label>
+            </div>
+            <label>
+              Celular para contato
+              <input name="phone" placeholder="Opcional" />
+            </label>
+            <button type="submit" class="primary">Criar conta</button>
+          </form>
+
+          <form id="login-form" class="stack hidden">
+            <label>
+              Email
+              <input name="email" type="email" required />
+            </label>
+            <label>
+              Senha
+              <input name="password" type="password" required />
+            </label>
+            <button type="submit" class="primary">Entrar</button>
+          </form>
+
+          <p id="auth-feedback" class="feedback"></p>
+        </section>
+
+        <section class="panel dashboard-panel">
+          <div class="panel-header">
+            <h2 id="dashboard-title">Painel de trocas</h2>
+            <p id="session-summary">Visão geral das trocas do condomínio.</p>
+          </div>
+
+          <div id="public-dashboard">
+            <div class="stats" id="public-stats"></div>
+
+            <div class="checklists">
+              <section class="checklist-card">
+                <div class="checklist-head">
+                  <h3>Figurinhas mais repetidas</h3>
+                  <span class="match-meta">Mais oferta no condomínio</span>
+                </div>
+                <div id="public-top-available" class="insight-list"></div>
+              </section>
+
+              <section class="checklist-card">
+                <div class="checklist-head">
+                  <h3>Figurinhas mais procuradas</h3>
+                  <span class="match-meta">Mais moradores precisando</span>
+                </div>
+                <div id="public-top-demanded" class="insight-list"></div>
+              </section>
+            </div>
+
+            <section class="matches-card">
+              <div class="checklist-head">
+                <h3>Leitura rápida do mercado de trocas</h3>
+              </div>
+              <div class="public-explainer">
+                <article class="explain-card">
+                  <strong>Repetidas cadastradas</strong>
+                  <p>Quantidade total de figurinhas marcadas como disponíveis para troca.</p>
+                </article>
+                <article class="explain-card">
+                  <strong>Figurinhas com match</strong>
+                  <p>Número de códigos que já possuem ao mesmo tempo oferta e demanda.</p>
+                </article>
+                <article class="explain-card">
+                  <strong>Conexões possíveis</strong>
+                  <p>Estimativa de quantas combinações de troca podem acontecer com os dados atuais.</p>
+                </article>
+              </div>
+            </section>
+          </div>
+
+          <div id="dashboard" class="hidden">
+            <div class="dashboard-actions">
+              <button id="save-collection" class="primary">Salvar checklist</button>
+              <button id="logout-button" class="ghost">Sair</button>
+            </div>
+
+            <div class="stats" id="stats"></div>
+
+            <div class="checklists">
+              <section class="checklist-card">
+                <div class="checklist-head">
+                  <h3>Figurinhas faltantes</h3>
+                  <input id="missing-search" placeholder="Buscar por código ou país" />
+                </div>
+                <div id="missing-list" class="sticker-groups"></div>
+              </section>
+
+              <section class="checklist-card">
+                <div class="checklist-head">
+                  <h3>Figurinhas repetidas</h3>
+                  <input id="duplicate-search" placeholder="Buscar por código ou país" />
+                </div>
+                <div id="duplicate-list" class="sticker-groups"></div>
+              </section>
+            </div>
+
+            <section class="matches-card">
+              <div class="checklist-head">
+                <h3>Possíveis trocas</h3>
+                <button id="refresh-matches" class="ghost">Atualizar cruzamento</button>
+              </div>
+              <div id="matches-list" class="matches-list"></div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

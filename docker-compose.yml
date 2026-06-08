@@ -1,0 +1,42 @@
+services:
+  db:
+    image: mariadb:11
+    container_name: album-copa-db
+    restart: unless-stopped
+    environment:
+      MARIADB_DATABASE: album_copa
+      MARIADB_USER: album_user
+      MARIADB_PASSWORD: album_pass
+      MARIADB_ROOT_PASSWORD: root_pass_local
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: album-copa-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: album_copa
+      DB_USER: album_user
+      DB_PASSWORD: album_pass
+    ports:
+      - "3000:3000"
+
+volumes:
+  mariadb_data:

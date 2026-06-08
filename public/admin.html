@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin | Troca de Figurinhas</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="admin-page">
+    <div class="page-shell">
+      <header class="hero">
+        <p class="eyebrow">Painel administrativo</p>
+        <h1>Controle geral dos moradores cadastrados</h1>
+        <p class="hero-copy">
+          Consulte os cadastros, edite informações, remova usuários e exporte os dados do sistema.
+        </p>
+      </header>
+
+      <main class="grid admin-grid" id="admin-main-grid">
+        <section class="panel auth-panel" id="admin-login-panel">
+          <div class="panel-header">
+            <h2>Acesso do administrador</h2>
+            <p>Entre com o usuário administrador para abrir o painel.</p>
+          </div>
+
+          <form id="admin-login-form" class="stack">
+            <label>
+              Usuário
+              <input name="username" required value="admin" />
+            </label>
+            <label>
+              Senha
+              <input name="password" type="password" required />
+            </label>
+            <button type="submit" class="primary">Entrar no admin</button>
+          </form>
+
+          <p id="admin-feedback" class="feedback"></p>
+        </section>
+
+        <section class="panel dashboard-panel hidden" id="admin-dashboard-panel">
+          <div class="panel-header">
+            <h2>Usuários cadastrados</h2>
+            <p id="admin-session-summary">Administrador conectado.</p>
+          </div>
+
+          <div class="dashboard-actions admin-toolbar">
+            <button id="admin-refresh" class="ghost">Atualizar</button>
+            <button id="admin-export-json" class="ghost">Exportar JSON</button>
+            <button id="admin-export-csv" class="ghost">Exportar CSV</button>
+            <button id="admin-logout" class="primary">Sair</button>
+          </div>
+
+          <div class="stats" id="admin-stats"></div>
+
+          <div class="admin-layout">
+            <section class="checklist-card">
+              <div class="checklist-head">
+                <h3>Lista de usuários</h3>
+                <input id="admin-user-search" placeholder="Buscar nome, email, bloco ou apto" />
+              </div>
+              <div id="admin-user-list" class="admin-user-list"></div>
+            </section>
+
+            <section class="checklist-card">
+              <div class="checklist-head">
+                <h3>Editar cadastro</h3>
+                <span id="admin-selected-label" class="match-meta">Selecione um usuário</span>
+              </div>
+
+              <form id="admin-edit-form" class="stack hidden">
+                <label>
+                  Nome
+                  <input name="name" required />
+                </label>
+                <label>
+                  Email
+                  <input name="email" type="email" required />
+                </label>
+                <div class="inline-fields">
+                  <label>
+                    Bloco
+                    <input name="block" required />
+                  </label>
+                  <label>
+                    Apartamento
+                    <input name="apartment" required />
+                  </label>
+                </div>
+                <label>
+                  Celular
+                  <input name="phone" />
+                </label>
+                <label>
+                  Figurinhas faltantes
+                  <textarea name="missingStickers" rows="5" placeholder="Uma por linha ou separadas por vírgula"></textarea>
+                </label>
+                <label>
+                  Figurinhas repetidas
+                  <textarea name="duplicateStickers" rows="5" placeholder="Uma por linha ou separadas por vírgula"></textarea>
+                </label>
+                <div class="dashboard-actions">
+                  <button type="submit" class="primary">Salvar alterações</button>
+                  <button type="button" id="admin-delete-user" class="danger">Remover usuário</button>
+                </div>
+              </form>
+
+              <div id="admin-edit-empty" class="empty-state">
+                Escolha um cadastro para ver e editar os detalhes.
+              </div>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div id="admin-password-modal" class="modal hidden">
+      <div class="modal-card">
+        <h3>Troque a senha inicial</h3>
+        <p class="match-meta">
+          No primeiro acesso, a senha padrão precisa ser substituída antes de usar o painel.
+        </p>
+
+        <form id="admin-password-form" class="stack">
+          <label>
+            Senha atual
+            <input name="currentPassword" type="password" required />
+          </label>
+          <label>
+            Nova senha
+            <input name="newPassword" type="password" minlength="8" required />
+          </label>
+          <button type="submit" class="primary">Atualizar senha</button>
+        </form>
+        <p id="admin-password-feedback" class="feedback"></p>
+      </div>
+    </div>
+
+    <script src="/admin.js"></script>
+  </body>
+</html>
