@@ -55,7 +55,7 @@ IMAGE_TAG="${IMAGE_TAG:-$(git rev-parse --short HEAD 2>/dev/null || date +%s)}"
 FULL_IMAGE_NAME="${ACR_NAME}.azurecr.io/${IMAGE_NAME}:${IMAGE_TAG}"
 
 echo "==> Ensuring Azure CLI extensions"
-az extension add --name containerapp --upgrade --allow-preview false >/dev/null
+az extension add --name containerapp --upgrade --allow-preview true >/dev/null
 
 echo "==> Creating resource group"
 az group create --name "$RESOURCE_GROUP" --location "$LOCATION" >/dev/null
@@ -117,7 +117,7 @@ if az containerapp show --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" >/
       DB_HOST="$MYSQL_FQDN" \
       DB_PORT=3306 \
       DB_NAME="$MYSQL_DATABASE_NAME" \
-      DB_USER="${MYSQL_ADMIN_USER}@${MYSQL_SERVER_NAME}" \
+      DB_USER="${MYSQL_ADMIN_USER}" \
       DB_PASSWORD="$MYSQL_ADMIN_PASSWORD" \
       DB_SSL=true >/dev/null
 else
@@ -139,7 +139,7 @@ else
       DB_HOST="$MYSQL_FQDN" \
       DB_PORT=3306 \
       DB_NAME="$MYSQL_DATABASE_NAME" \
-      DB_USER="${MYSQL_ADMIN_USER}@${MYSQL_SERVER_NAME}" \
+      DB_USER="${MYSQL_ADMIN_USER}" \
       DB_PASSWORD="$MYSQL_ADMIN_PASSWORD" \
       DB_SSL=true >/dev/null
 fi

@@ -92,6 +92,7 @@ Observacoes:
 - O `gh` atual desta maquina esta com token invalido e precisa de novo login.
 - O Azure CLI funciona melhor aqui usando `AZURE_CONFIG_DIR=/private/tmp/azure-codex-config`.
 - Para Azure MySQL, a aplicacao ja suporta conexao SSL por variaveis de ambiente.
+- No Azure Database for MySQL Flexible Server, use o login administrativo simples em `DB_USER` (ex.: `albumadmin`), sem concatenar `@nome-do-servidor`.
 
 ## Painel administrativo
 
