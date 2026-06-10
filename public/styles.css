@@ -382,6 +382,17 @@ button:hover {
   align-items: flex-start;
 }
 
+.checklist-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.checklist-tools button {
+  padding: 6px 10px;
+  font-size: 0.82rem;
+}
+
 .checklist-head input {
   flex: 1 1 240px;
   min-width: 0;

@@ -34,6 +34,10 @@ const logoutButton = document.querySelector("#logout-button");
 const refreshMatchesButton = document.querySelector("#refresh-matches");
 const missingSearch = document.querySelector("#missing-search");
 const duplicateSearch = document.querySelector("#duplicate-search");
+const clearMissingButton = document.querySelector("#clear-missing");
+const collapseMissingButton = document.querySelector("#collapse-missing");
+const clearDuplicateButton = document.querySelector("#clear-duplicate");
+const collapseDuplicateButton = document.querySelector("#collapse-duplicate");
 const toast = document.querySelector("#toast");
 const editProfileButton = document.querySelector("#edit-profile");
 const saveProfileButton = document.querySelector("#save-profile");
@@ -255,6 +259,10 @@ logoutButton.addEventListener("click", async () => {
 refreshMatchesButton.addEventListener("click", refreshMatches);
 missingSearch.addEventListener("input", () => renderChecklist("missing"));
 duplicateSearch.addEventListener("input", () => renderChecklist("duplicate"));
+clearMissingButton.addEventListener("click", () => clearChecklist("missing"));
+clearDuplicateButton.addEventListener("click", () => clearChecklist("duplicate"));
+collapseMissingButton.addEventListener("click", () => collapseChecklist("missing"));
+collapseDuplicateButton.addEventListener("click", () => collapseChecklist("duplicate"));
 
 init().catch((error) => {
   showFeedback(error.message || "Falha ao carregar a aplicação.", true);
@@ -709,6 +717,25 @@ function refreshChecklistCounts(kind) {
     const countInSection = section.stickers.filter((sticker) => selectedSet.has(sticker.code)).length;
     counter.textContent = `${countInSection}/${section.stickers.length}`;
   });
+}
+
+function clearChecklist(kind) {
+  if (kind === "missing") {
+    state.missingStickers = new Set();
+  } else {
+    state.duplicateStickers = new Set();
+    state.duplicateStickerQuantities = {};
+  }
+
+  state.openGroups[kind].clear();
+  renderStats();
+  renderChecklist(kind);
+  showToast(kind === "missing" ? "Figurinhas faltantes limpas." : "Figurinhas repetidas limpas.");
+}
+
+function collapseChecklist(kind) {
+  state.openGroups[kind].clear();
+  renderChecklist(kind);
 }
 
 function syncDuplicateQuantityField(checkbox) {
