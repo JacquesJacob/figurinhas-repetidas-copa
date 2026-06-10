@@ -762,13 +762,20 @@ async function refreshMatches() {
   matchesList.innerHTML = result.matches
     .map((match) => {
       const phone = match.user.phone ? `Celular: ${match.user.phone}` : "Celular não informado";
+      const theyHaveForYou = match.theyCanHelp.length
+        ? `
+          <div class="match-chip-row">
+            ${match.theyCanHelp.map((code) => `<span class="chip">${code}</span>`).join("")}
+          </div>
+        `
+        : `<p class="match-meta">Ela não tem nenhuma figurinha que você precise neste momento.</p>`;
       const mutual = match.mutualTrade.length
         ? `
           <div class="match-chip-row">
             ${match.mutualTrade.map((code) => `<span class="chip alt">${code}</span>`).join("")}
           </div>
         `
-        : `<p class="match-meta">Você ainda não marcou repetidas que interessem a esta pessoa.</p>`;
+        : `<p class="match-meta">Você não tem nenhuma figurinha que ela precise neste momento.</p>`;
 
       return `
         <article class="match-card">
@@ -778,11 +785,9 @@ async function refreshMatches() {
           </p>
 
           <p><strong>Ela tem para você:</strong></p>
-          <div class="match-chip-row">
-            ${match.theyCanHelp.map((code) => `<span class="chip">${code}</span>`).join("")}
-          </div>
+          ${theyHaveForYou}
 
-          <p><strong>Possível troca de volta:</strong></p>
+          <p><strong>Você tem para ela:</strong></p>
           ${mutual}
         </article>
       `;
