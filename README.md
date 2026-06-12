@@ -2,6 +2,9 @@
 
 Sistema web simples para organizar trocas de figurinhas do album Panini da Copa do Mundo 2026 dentro de um condominio.
 
+<img width="979" height="634" alt="image" src="https://github.com/user-attachments/assets/17c527d0-ad8b-4bf9-97a0-59fc2b5b9233" />
+
+
 ## O que esta pronto
 
 - Cadastro com nome, email, senha, bloco, apartamento e celular opcional
