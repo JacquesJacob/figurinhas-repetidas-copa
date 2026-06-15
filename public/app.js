@@ -25,6 +25,11 @@ const stats = document.querySelector("#stats");
 const publicStats = document.querySelector("#public-stats");
 const publicTopAvailable = document.querySelector("#public-top-available");
 const publicTopDemanded = document.querySelector("#public-top-demanded");
+const publicIFIGList = document.querySelector("#public-ifig-list");
+const publicIFIGLegend = document.querySelector("#public-ifig-legend");
+const ifigList = document.querySelector("#ifig-list");
+const ifigLegend = document.querySelector("#ifig-legend");
+const loggedInIFIGCard = document.querySelector("#logged-in-ifig-card");
 const missingList = document.querySelector("#missing-list");
 const duplicateList = document.querySelector("#duplicate-list");
 const matchesList = document.querySelector("#matches-list");
@@ -326,6 +331,7 @@ function renderSession() {
   const isLoggedIn = Boolean(state.currentUser);
   dashboard.classList.toggle("hidden", !isLoggedIn);
   publicDashboard.classList.toggle("hidden", isLoggedIn);
+  loggedInIFIGCard.classList.toggle("hidden", isLoggedIn);
   authTabs.classList.toggle("hidden", isLoggedIn);
   profileView.classList.toggle("hidden", !isLoggedIn || isEditingProfile);
   profileForm.classList.toggle("hidden", !isLoggedIn || !isEditingProfile);
@@ -399,6 +405,10 @@ function renderPublicStats() {
     publicStats.innerHTML = `<article class="stat"><strong>0</strong><span>dados ainda indisponíveis</span></article>`;
     publicTopAvailable.innerHTML = `<div class="empty-state">Ainda sem estatísticas públicas.</div>`;
     publicTopDemanded.innerHTML = `<div class="empty-state">Ainda sem estatísticas públicas.</div>`;
+    publicIFIGList.innerHTML = `<div class="empty-state">Ainda não há dados suficientes para calcular o IFIG Index.</div>`;
+    publicIFIGLegend.innerHTML = "";
+    ifigList.innerHTML = `<div class="empty-state">Ainda não há dados suficientes para calcular o IFIG Index.</div>`;
+    ifigLegend.innerHTML = "";
     return;
   }
 
@@ -425,6 +435,7 @@ function renderPublicStats() {
 
   renderInsightList(publicTopAvailable, statsData.topAvailable, "owners", "moradores com repetida", "needers");
   renderInsightList(publicTopDemanded, statsData.topDemanded, "needers", "moradores precisando", "owners");
+  renderIFIGPanels(statsData);
 }
 
 function buildPublicSessionSummary(update) {
@@ -476,6 +487,90 @@ function renderInsightList(container, items, primaryKey, primaryLabel, secondary
     .join("");
 }
 
+function renderIFIGExperience(listContainer, legendContainer, items) {
+  if (!listContainer || !legendContainer) {
+    return;
+  }
+
+  if (!items.length) {
+    listContainer.innerHTML = `<div class="empty-state">Ainda não há dados suficientes para calcular o IFIG Index.</div>`;
+    legendContainer.innerHTML = "";
+    return;
+  }
+
+  listContainer.innerHTML = items
+    .map((item) => {
+      const tierClass = slugifyLabel(item.tier);
+      const ownerLabel = item.ownerNames?.length
+        ? item.ownerNames.join(", ")
+        : "Ninguém cadastrou repetida ainda";
+      return `
+        <article class="ifig-row">
+          <div class="ifig-row-top">
+            <div class="ifig-title-block">
+              <strong>${item.code}</strong>
+              <span class="ifig-tier ${tierClass}">${item.tier}</span>
+              <span class="ifig-owner-list">${ownerLabel}</span>
+            </div>
+            <span class="ifig-score">${item.index}</span>
+          </div>
+          <div class="insight-bar-track ifig-bar-track">
+            <div class="ifig-bar-fill ${tierClass}" style="width: ${Math.max(item.index, 6)}%"></div>
+          </div>
+          <p class="match-meta">
+            ${item.needers} precisando · ${item.copies} repetidas cadastradas · ${item.owners} moradores oferecendo
+          </p>
+        </article>
+      `;
+    })
+    .join("");
+
+  legendContainer.innerHTML = `
+    <article class="ifig-legend-card">
+      <strong>Como ler o IFIG</strong>
+      <p>Quanto maior o índice, mais difícil tende a ser encontrar essa figurinha nas trocas do condomínio.</p>
+    </article>
+    <article class="ifig-legend-card">
+      <strong>Base do cálculo</strong>
+      <p>O índice combina três sinais: moradores precisando, quantidade de repetidas cadastradas e pressão entre demanda e oferta.</p>
+    </article>
+    <div class="ifig-band-list">
+      <article class="ifig-band">
+        <span class="ifig-tier lendaria">80-100 · Lendária</span>
+        <p>Procura muito acima da oferta ou ainda sem repetidas cadastradas.</p>
+      </article>
+      <article class="ifig-band">
+        <span class="ifig-tier muito-rara">60-79 · Muito rara</span>
+        <p>Oferta baixa e bastante gente procurando.</p>
+      </article>
+      <article class="ifig-band">
+        <span class="ifig-tier rara">40-59 · Rara</span>
+        <p>Já mostra pressão relevante nas trocas.</p>
+      </article>
+      <article class="ifig-band">
+        <span class="ifig-tier disputada">20-39 · Disputada</span>
+        <p>Há procura, mas ainda existe alguma oferta circulando.</p>
+      </article>
+      <article class="ifig-band">
+        <span class="ifig-tier disponivel">0-19 · Disponível</span>
+        <p>Figurinha mais comum no mercado atual do condomínio.</p>
+      </article>
+    </div>
+  `;
+}
+
+function slugifyLabel(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+}
+
+function getStickerIFIG(code) {
+  return state.publicStats?.ifigBySticker?.[code] || null;
+}
+
 function renderStats() {
   const total = state.album.meta.totalStickers;
   const missing = state.missingStickers.size;
@@ -499,6 +594,14 @@ function renderStats() {
       <span>repetidas para trocar</span>
     </article>
   `;
+
+  renderIFIGPanels(state.publicStats);
+}
+
+function renderIFIGPanels(statsData) {
+  const items = statsData?.ifigTopRarest || [];
+  renderIFIGExperience(publicIFIGList, publicIFIGLegend, items);
+  renderIFIGExperience(ifigList, ifigLegend, items);
 }
 
 function renderChecklist(kind) {
@@ -524,6 +627,15 @@ function renderChecklist(kind) {
       const items = filtered
         .map(
           (sticker) => {
+            const ifig = getStickerIFIG(sticker.code);
+            const ifigTierClass = ifig ? slugifyLabel(ifig.tier) : "";
+            const stickerInfo = `
+              <span class="sticker-code-block">
+                <span class="sticker-code ${ifigTierClass}">${sticker.code}</span>
+                ${ifig ? `<span class="sticker-ifig-badge ${ifigTierClass}">${ifig.tier}</span>` : ""}
+              </span>
+            `;
+
             if (kind === "duplicate") {
               const quantity = state.duplicateStickerQuantities[sticker.code] || 1;
               const checked = selectedSet.has(sticker.code);
@@ -537,7 +649,7 @@ function renderChecklist(kind) {
                       data-code="${sticker.code}"
                       ${checked ? "checked" : ""}
                     />
-                    <span>${sticker.code}</span>
+                    ${stickerInfo}
                   </label>
                   <input
                     type="number"
@@ -561,7 +673,7 @@ function renderChecklist(kind) {
                   data-code="${sticker.code}"
                   ${selectedSet.has(sticker.code) ? "checked" : ""}
                 />
-                <span>${sticker.code}</span>
+                ${stickerInfo}
               </label>
             `;
           }

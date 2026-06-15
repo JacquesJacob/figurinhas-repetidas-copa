@@ -509,6 +509,77 @@ button:hover {
   background: rgba(235, 248, 241, 0.95);
 }
 
+.sticker-code-block {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.sticker-code {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.sticker-code.lendaria {
+  color: #8b1f47;
+}
+
+.sticker-code.muito-rara {
+  color: #6d37a5;
+}
+
+.sticker-code.rara {
+  color: #8e4b1f;
+}
+
+.sticker-code.disputada {
+  color: #8a6517;
+}
+
+.sticker-code.disponivel {
+  color: var(--accent-strong);
+}
+
+.sticker-ifig-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 2px 6px;
+  font-size: 0.62rem;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: rgba(31, 47, 26, 0.08);
+  color: var(--muted);
+}
+
+.sticker-ifig-badge.lendaria {
+  background: rgba(126, 32, 66, 0.14);
+  color: #8b1f47;
+}
+
+.sticker-ifig-badge.muito-rara {
+  background: rgba(132, 67, 186, 0.13);
+  color: #6d37a5;
+}
+
+.sticker-ifig-badge.rara {
+  background: rgba(192, 103, 46, 0.15);
+  color: #8e4b1f;
+}
+
+.sticker-ifig-badge.disputada {
+  background: rgba(215, 162, 75, 0.18);
+  color: #8a6517;
+}
+
+.sticker-ifig-badge.disponivel {
+  background: rgba(14, 122, 83, 0.12);
+  color: var(--accent-strong);
+}
+
 .sticker-quantity {
   width: 68px;
   min-width: 68px;
@@ -570,6 +641,153 @@ button:hover {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   margin-top: 16px;
+}
+
+.ifig-card {
+  margin-top: 18px;
+}
+
+#logged-in-ifig-card {
+  margin-bottom: 18px;
+}
+
+#dashboard > .checklists {
+  margin-top: 18px;
+}
+
+.ifig-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(280px, 0.9fr);
+  gap: 18px;
+  margin-top: 16px;
+  align-items: start;
+}
+
+.ifig-list,
+.ifig-legend {
+  display: grid;
+  gap: 12px;
+}
+
+.ifig-row,
+.ifig-legend-card,
+.ifig-band {
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.ifig-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.ifig-title-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ifig-owner-list {
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.ifig-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(31, 47, 26, 0.08);
+  font-weight: 800;
+  color: var(--accent-strong);
+}
+
+.ifig-tier {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.ifig-tier.lendaria {
+  background: rgba(126, 32, 66, 0.14);
+  color: #8b1f47;
+}
+
+.ifig-tier.muito-rara {
+  background: rgba(132, 67, 186, 0.13);
+  color: #6d37a5;
+}
+
+.ifig-tier.rara {
+  background: rgba(192, 103, 46, 0.15);
+  color: #8e4b1f;
+}
+
+.ifig-tier.disputada {
+  background: rgba(215, 162, 75, 0.18);
+  color: #8a6517;
+}
+
+.ifig-tier.disponivel {
+  background: rgba(14, 122, 83, 0.12);
+  color: var(--accent-strong);
+}
+
+.ifig-bar-track {
+  margin-bottom: 10px;
+}
+
+.ifig-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+}
+
+.ifig-bar-fill.lendaria {
+  background: linear-gradient(90deg, #8b1f47, #d06c91);
+}
+
+.ifig-bar-fill.muito-rara {
+  background: linear-gradient(90deg, #6d37a5, #a176d8);
+}
+
+.ifig-bar-fill.rara {
+  background: linear-gradient(90deg, #8e4b1f, #d7a24b);
+}
+
+.ifig-bar-fill.disputada {
+  background: linear-gradient(90deg, #b58b27, #e7c96f);
+}
+
+.ifig-bar-fill.disponivel {
+  background: linear-gradient(90deg, #0e7a53, #65b994);
+}
+
+.ifig-legend-card strong,
+.ifig-band strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.ifig-legend-card p,
+.ifig-band p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.ifig-band-list {
+  display: grid;
+  gap: 12px;
 }
 
 .explain-card {
@@ -754,7 +972,8 @@ button:hover {
 @media (max-width: 1080px) {
   .grid,
   .checklists,
-  .admin-layout {
+  .admin-layout,
+  .ifig-layout {
     grid-template-columns: 1fr;
   }
 
