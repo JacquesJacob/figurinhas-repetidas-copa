@@ -579,9 +579,10 @@ function renderStats() {
     0
   );
   const owned = total - missing;
+  const ownedPercent = total > 0 ? Math.round((owned / total) * 100) : 0;
 
   stats.innerHTML = `
-    <article class="stat">
+    <article class="stat stat-tooltip" data-tooltip="${ownedPercent}% concluído">
       <strong>${owned}</strong>
       <span>já marcadas como no álbum</span>
     </article>
@@ -594,6 +595,14 @@ function renderStats() {
       <span>repetidas para trocar</span>
     </article>
   `;
+
+  stats.querySelectorAll(".stat-tooltip").forEach((card) => {
+    card.addEventListener("mousemove", (event) => {
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty("--tooltip-x", `${event.clientX - rect.left + 14}px`);
+      card.style.setProperty("--tooltip-y", `${event.clientY - rect.top + 14}px`);
+    });
+  });
 
   renderIFIGPanels(state.publicStats);
 }

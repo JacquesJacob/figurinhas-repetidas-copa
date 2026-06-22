@@ -423,6 +423,33 @@ button:hover {
   margin-bottom: 6px;
 }
 
+.stat-tooltip {
+  position: relative;
+}
+
+.stat-tooltip::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  left: var(--tooltip-x, 24px);
+  top: var(--tooltip-y, 24px);
+  transform: translate(0, 0);
+  background: rgba(31, 47, 26, 0.94);
+  color: #fff8eb;
+  padding: 7px 10px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 12px 28px rgba(31, 47, 26, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.stat-tooltip:hover::after {
+  opacity: 1;
+}
+
 .checklists {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
