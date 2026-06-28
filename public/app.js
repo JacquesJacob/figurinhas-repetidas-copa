@@ -946,7 +946,17 @@ async function refreshMatches() {
 
       return `
         <article class="match-card">
-          <h4>${match.user.name}</h4>
+          <div class="match-card-head">
+            <h4>${match.user.name}</h4>
+            <div class="match-card-counters">
+              <span class="match-counter need">
+                ${match.user.missingCount} faltando
+              </span>
+              <span class="match-counter have">
+                ${match.user.duplicateCount} repetidas
+              </span>
+            </div>
+          </div>
           <p class="match-meta">
             Bloco ${match.user.block} · Apto ${match.user.apartment} · ${phone} · ${match.user.email}
           </p>
