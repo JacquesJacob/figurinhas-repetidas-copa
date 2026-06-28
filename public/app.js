@@ -52,6 +52,8 @@ const profileEmail = document.querySelector("#profile-email");
 const profileBlock = document.querySelector("#profile-block");
 const profileApartment = document.querySelector("#profile-apartment");
 const profilePhone = document.querySelector("#profile-phone");
+const viewportMobileQuery = window.matchMedia("(max-width: 720px)");
+const viewportTabletQuery = window.matchMedia("(max-width: 1080px)");
 
 let toastTimer = null;
 let isEditingProfile = false;
@@ -59,6 +61,9 @@ let isEditingProfile = false;
 document.querySelectorAll("[data-auth-tab]").forEach((button) => {
   button.addEventListener("click", () => switchAuthTab(button.dataset.authTab));
 });
+
+viewportMobileQuery.addEventListener("change", syncViewportMode);
+viewportTabletQuery.addEventListener("change", syncViewportMode);
 
 function buildRegisterPayload(form) {
   const formData = new FormData(form);
@@ -274,6 +279,8 @@ init().catch((error) => {
 });
 
 async function init() {
+  syncViewportMode();
+
   const [albumResult, sessionResult, publicStatsResult] = await Promise.all([
     request("/api/stickers"),
     request("/api/session"),
@@ -299,6 +306,16 @@ async function init() {
   if (state.currentUser) {
     await refreshMatches();
   }
+}
+
+function syncViewportMode() {
+  const viewport = viewportMobileQuery.matches
+    ? "mobile"
+    : viewportTabletQuery.matches
+      ? "tablet"
+      : "desktop";
+
+  document.body.dataset.viewport = viewport;
 }
 
 async function loadPublicStats() {

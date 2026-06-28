@@ -25,6 +25,12 @@ body {
     linear-gradient(180deg, #efe7d6 0%, #f8f4ec 45%, #f3ede2 100%);
 }
 
+body[data-viewport="mobile"] {
+  background:
+    radial-gradient(circle at top left, rgba(255, 214, 126, 0.36), transparent 24%),
+    linear-gradient(180deg, #f3ecd8 0%, #faf6ee 48%, #f2ebde 100%);
+}
+
 .page-shell {
   max-width: 1380px;
   margin: 0 auto;
@@ -448,6 +454,146 @@ button:hover {
 
 .stat-tooltip:hover::after {
   opacity: 1;
+}
+
+body[data-viewport="mobile"] .page-shell {
+  padding: 14px 12px calc(24px + env(safe-area-inset-bottom, 0px));
+}
+
+body[data-viewport="mobile"] .grid {
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+body[data-viewport="mobile"] .hero,
+body[data-viewport="mobile"] .panel,
+body[data-viewport="mobile"] .checklist-card,
+body[data-viewport="mobile"] .matches-card {
+  border-radius: 20px;
+}
+
+body[data-viewport="mobile"] .hero,
+body[data-viewport="mobile"] .panel {
+  padding: 18px;
+}
+
+body[data-viewport="mobile"] .hero-art-frame {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  border-radius: 18px;
+}
+
+body[data-viewport="mobile"] .tabs {
+  gap: 10px;
+  margin: 16px 0;
+}
+
+body[data-viewport="mobile"] .tab,
+body[data-viewport="mobile"] .dashboard-actions button,
+body[data-viewport="mobile"] .profile-actions button {
+  min-height: 46px;
+}
+
+body[data-viewport="mobile"] .inline-fields,
+body[data-viewport="mobile"] .stats,
+body[data-viewport="mobile"] #public-stats,
+body[data-viewport="mobile"] .checklists,
+body[data-viewport="mobile"] .public-explainer,
+body[data-viewport="mobile"] .ifig-layout,
+body[data-viewport="mobile"] .admin-layout {
+  grid-template-columns: 1fr;
+}
+
+body[data-viewport="mobile"] .dashboard-actions,
+body[data-viewport="mobile"] .checklist-head,
+body[data-viewport="mobile"] .profile-actions {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+body[data-viewport="mobile"] .checklist-tools {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+body[data-viewport="mobile"] .checklist-head input {
+  flex-basis: 100%;
+}
+
+body[data-viewport="mobile"] .sticker-groups {
+  max-height: none;
+  padding-right: 0;
+}
+
+body[data-viewport="mobile"] .group-items {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0 12px 12px;
+}
+
+body[data-viewport="mobile"] .group-toggle {
+  padding: 13px 14px;
+  font-size: 0.95rem;
+}
+
+body[data-viewport="mobile"] .sticker-pill,
+body[data-viewport="mobile"] .sticker-pill-duplicate {
+  align-items: flex-start;
+  padding: 9px 10px;
+}
+
+body[data-viewport="mobile"] .sticker-pill-toggle {
+  align-items: flex-start;
+}
+
+body[data-viewport="mobile"] .sticker-code-block {
+  gap: 5px;
+}
+
+body[data-viewport="mobile"] .sticker-ifig-badge {
+  font-size: 0.58rem;
+}
+
+body[data-viewport="mobile"] .sticker-quantity {
+  width: 58px;
+  min-width: 58px;
+  padding: 7px 8px;
+}
+
+body[data-viewport="mobile"] .ifig-row-top,
+body[data-viewport="mobile"] .insight-row-top {
+  align-items: flex-start;
+}
+
+body[data-viewport="mobile"] .ifig-score {
+  min-width: 46px;
+  padding: 6px 10px;
+}
+
+body[data-viewport="mobile"] .toast {
+  width: min(92vw, 360px);
+}
+
+body[data-viewport="mobile"] input,
+body[data-viewport="mobile"] select,
+body[data-viewport="mobile"] textarea {
+  font-size: 16px;
+}
+
+body[data-viewport="mobile"] .inline-tooltip::after,
+body[data-viewport="mobile"] .stat-tooltip::after {
+  display: none;
+}
+
+body[data-viewport="tablet"] .grid {
+  grid-template-columns: 1fr;
+}
+
+body[data-viewport="tablet"] .hero-art-frame {
+  width: min(72%, 620px);
 }
 
 .checklists {
