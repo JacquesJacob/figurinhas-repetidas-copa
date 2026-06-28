@@ -927,6 +927,9 @@ async function refreshMatches() {
   matchesList.innerHTML = result.matches
     .map((match) => {
       const phone = match.user.phone ? `Celular: ${match.user.phone}` : "Celular não informado";
+      const updatedAt = match.user.collectionUpdatedAt
+        ? `Atualizado em ${formatMatchDate(match.user.collectionUpdatedAt)}`
+        : "Sem atualização registrada";
       const theyHaveCount = match.theyCanHelp.length;
       const mutualCount = match.mutualTrade.length;
       const theyHaveForYou = theyHaveCount
@@ -947,7 +950,10 @@ async function refreshMatches() {
       return `
         <article class="match-card">
           <div class="match-card-head">
-            <h4>${match.user.name}</h4>
+            <div class="match-card-title">
+              <h4>${match.user.name}</h4>
+              <span class="match-updated-at">${updatedAt}</span>
+            </div>
             <div class="match-card-counters">
               <span class="match-counter need">
                 ${match.user.missingCount} faltando
@@ -970,6 +976,20 @@ async function refreshMatches() {
       `;
     })
     .join("");
+}
+
+function formatMatchDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
 }
 
 function showFeedback(message, isError = false) {
