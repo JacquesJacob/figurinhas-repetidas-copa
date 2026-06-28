@@ -232,16 +232,7 @@ function escapeCsv(value) {
   return stringValue;
 }
 
-function escapeXml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-function buildCollectionWorkbookXml(user) {
+function buildCollectionCsv(user) {
   const missing = [...(user.missingStickers || [])];
   const duplicates = [...(user.duplicateStickers || [])].map((code) => {
     const quantity = user.duplicateStickerQuantities?.[code] || 1;
@@ -252,32 +243,15 @@ function buildCollectionWorkbookXml(user) {
   const rows = Array.from({ length: totalRows }, (_, index) => {
     const missingValue = missing[index] || "";
     const duplicateValue = duplicates[index] || "";
+    return [missingValue, duplicateValue];
+  });
 
-    return `
-      <Row>
-        <Cell><Data ss:Type="String">${escapeXml(missingValue)}</Data></Cell>
-        <Cell><Data ss:Type="String">${escapeXml(duplicateValue)}</Data></Cell>
-      </Row>
-    `;
-  }).join("");
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:o="urn:schemas-microsoft-com:office:office"
- xmlns:x="urn:schemas-microsoft-com:office:excel"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:html="http://www.w3.org/TR/REC-html40">
-  <Worksheet ss:Name="Minhas Figurinhas">
-    <Table>
-      <Row>
-        <Cell><Data ss:Type="String">Figurinhas faltantes</Data></Cell>
-        <Cell><Data ss:Type="String">Figurinhas repetidas</Data></Cell>
-      </Row>
-      ${rows}
-    </Table>
-  </Worksheet>
-</Workbook>`;
+  return [
+    ["Figurinhas faltantes", "Figurinhas repetidas"],
+    ...rows
+  ]
+    .map((columns) => columns.map((value) => escapeCsv(value)).join(","))
+    .join("\n");
 }
 
 function formatDuplicateStickerExport(user) {
@@ -490,12 +464,12 @@ async function handleApi(req, res, url) {
       return;
     }
 
-    const fileName = `minhas-figurinhas-${session.user.block.toLowerCase()}-${session.user.apartment}.xls`;
+    const fileName = `minhas-figurinhas-${session.user.block.toLowerCase()}-${session.user.apartment}.csv`;
     res.writeHead(200, {
-      "Content-Type": "application/vnd.ms-excel; charset=utf-8",
+      "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="${fileName}"`
     });
-    res.end(buildCollectionWorkbookXml(session.user));
+    res.end(`\uFEFF${buildCollectionCsv(session.user)}`);
     return;
   }
 
